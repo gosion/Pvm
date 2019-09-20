@@ -74,7 +74,8 @@ namespace Pvm.Tests
 
             process.Start(initData);
 
-            this.assertion(process);
+            Assert.Null(process.Context.Get<string>("waiting"));
+            Assert.Equal(26, process.Context.Get<int>("total"));
         }
 
         [Fact]
@@ -112,7 +113,8 @@ namespace Pvm.Tests
             var initData = new Dictionary<string, object>();
             process.Start(initData);
 
-            this.assertion(process);
+            Assert.Null(process.Context.Get<string>("waiting"));
+            Assert.Equal(26, process.Context.Get<int>("total"));
         }
 
         [Fact]
@@ -152,12 +154,6 @@ namespace Pvm.Tests
             var initData = new Dictionary<string, object>();
             process.Start(initData);
 
-            this.assertion(process);
-        }
-
-        private void assertion(Process process)
-        {
-            Assert.Null(process.Context.Get<string>("state"));
             Assert.Equal(26 + 31, process.Context.Get<int>("total"));
         }
 
