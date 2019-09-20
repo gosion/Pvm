@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Pvm.Core.Contexts;
 
 namespace Pvm.Core
 {
@@ -6,8 +7,8 @@ namespace Pvm.Core
     {
         Walker NextWalker { get; }
 
-        void CreateWalker(Transition transition, IDictionary<string, object> token);
+        void CreateWalker(Transition transition, WalkerContext token = null);
 
-        void Dispatch(Walker walker, Context context);
+        void Dispatch(Walker walker, ProcessContext context);
     }
 }

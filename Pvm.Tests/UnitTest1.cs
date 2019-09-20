@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Pvm.Core;
-using Pvm.Core.Utils;
+using Pvm.Core.Contexts;
 using Xunit;
 
 namespace Pvm.Tests
@@ -59,7 +60,7 @@ namespace Pvm.Tests
                 return (c, t) =>
                 {
                     int total = c.Get("total", 0);
-                    int current = t.GetValue("price", 26);
+                    int current = t.Get("price", 26);
                     c.Set("total", total + current);
                     return Task.CompletedTask;
                 };
@@ -68,10 +69,10 @@ namespace Pvm.Tests
             act4.AddIncomingTransition(trans3);
             act4.AddIncomingTransition(trans4);
 
-            var token = new Dictionary<string, object>();
-            process.Dispatcher.CreateWalker(trans0, token);
+            var initData = new Dictionary<string, object>();
+            process.Dispatcher.CreateWalker(trans0, null);
 
-            process.Start(token);
+            process.Start(initData);
 
             this.assertion(process);
         }
@@ -97,7 +98,7 @@ namespace Pvm.Tests
                                 return (c, t) =>
                                 {
                                     int total = c.Get("total", 0);
-                                    int current = t.GetValue("price", 26);
+                                    int current = t.Get("price", 26);
                                     c.Set("total", total + current);
                                     return Task.CompletedTask;
                                 };
@@ -108,8 +109,8 @@ namespace Pvm.Tests
                             .CreateTransition("act3", "act4")
                             .SetStart("act1")
                             .Build();
-            var token = new Dictionary<string, object>();
-            process.Start(token);
+            var initData = new Dictionary<string, object>();
+            process.Start(initData);
 
             this.assertion(process);
         }
@@ -125,7 +126,7 @@ namespace Pvm.Tests
                                 return (c, t) =>
                                 {
                                     int total = c.Get("total", 0);
-                                    int current = t.GetValue("price", 31);
+                                    int current = t.Get("price", 31);
                                     c.Set("total", total + current);
                                     return Task.CompletedTask;
                                 };
@@ -137,7 +138,7 @@ namespace Pvm.Tests
                                 return (c, t) =>
                                 {
                                     int total = c.Get("total", 0);
-                                    int current = t.GetValue("price", 26);
+                                    int current = t.Get("price", 26);
                                     c.Set("total", total + current);
                                     return Task.CompletedTask;
                                 };
@@ -148,8 +149,8 @@ namespace Pvm.Tests
                             .CreateTransition("act3", "act4")
                             .SetStart("act1")
                             .Build();
-            var token = new Dictionary<string, object>();
-            process.Start(token);
+            var initData = new Dictionary<string, object>();
+            process.Start(initData);
 
             this.assertion(process);
         }
@@ -158,6 +159,92 @@ namespace Pvm.Tests
         {
             Assert.Null(process.Context.Get<string>("state"));
             Assert.Equal(26 + 31, process.Context.Get<int>("total"));
+        }
+
+        [Fact]
+        public void Test_DynamicActivities()
+        {
+            var process = new ProcessBuilder()
+                            .CreateActivity("act1")
+                            .CreateExecution("act1", _ =>
+                            {
+                                return (c, t) =>
+                                {
+                                    // 获取需要动态分拆的数量
+                                    int number = t.Get("itemcount", 1);
+                                    Transition nextTranistion = t.Destination.OutgoingTransitions?[0];
+
+                                    if (nextTranistion != null)
+                                    {
+                                        Transition dynamicTransition = null;
+
+                                        // 第一个item使用原有的transition
+                                        // 从第二个开始，添加transition并把
+                                        for (int i = 2; i <= number; i++)
+                                        {
+                                            dynamicTransition = new Transition
+                                            {
+                                                Source = nextTranistion.Source,
+                                                Destination = nextTranistion.Destination
+                                            };
+
+                                            nextTranistion.Source.AddOutgoingTransition(dynamicTransition);
+                                            nextTranistion.Destination.AddIncomingTransition(dynamicTransition);
+                                        }
+                                    }
+
+                                    return Task.CompletedTask;
+                                };
+                            })
+                            .CreateActivity("act2")
+                            .CreateExecution("act2", _ =>
+                            {
+                                return (c, t) =>
+                                {
+                                    Console.WriteLine(c.Get("accepted", 0));
+                                    c.Set("accepted", c.Get("accepted", 0) + 1);
+                                    return Task.CompletedTask;
+                                };
+                            })
+                            .CreateTransition("act1", "act2")
+                            .CreateActivity("act3")
+                            .CreateTransition("act2", "act3")
+                            .CreateActivity("act4")
+                            .CreateTransition("act3", "act4")
+                            .CreateActivity("act5")
+                            .CreateTransition("act4", "act5")
+                            .CreateExecution("act5", _ =>
+                            {
+                                return (c, t) =>
+                                {
+                                    // TransitionState[] availableStates = new TransitionState[] {
+                                    //     TransitionState.Passed, TransitionState.Blocked
+                                    // };
+
+                                    // if (t.Destination.IncomingTransitions.Any(ts => availableStates.Contains(ts.State) == false))
+                                    // {
+                                    //     t.CurrentTransition.SetState(TransitionState.Blocked);
+                                    // }
+
+                                    int number = c.Get("itemcount", 1);
+                                    int accepted = c.Get("accepted", 0);
+
+                                    if (number > accepted)
+                                    {
+                                        t.CurrentTransition.SetState(TransitionState.Blocked);
+                                    }
+
+                                    return Task.CompletedTask;
+                                };
+                            })
+                            .SetStart("act1")
+                            .Build();
+            var initData = new Dictionary<string, object>();
+            int itemcount = 5;
+            initData["itemcount"] = itemcount;
+            process.Start(initData);
+
+            Assert.Equal(itemcount, process.Context.Get("accepted", 0));
         }
     }
 }

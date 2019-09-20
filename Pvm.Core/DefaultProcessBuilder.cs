@@ -14,7 +14,7 @@ namespace Pvm.Core
         public Process Build()
         {
             var process = new Process();
-            process.Dispatcher.CreateWalker(this._startTransition, null);
+            process.Dispatcher.CreateWalker(this._startTransition);
 
             return process;
         }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Pvm.Core.Contexts;
 
 namespace Pvm.Core.Internal
 {
@@ -8,15 +9,20 @@ namespace Pvm.Core.Internal
 
         public Walker NextWalker => _walkers.Count > 0 ? _walkers[0] : null;
 
-        public void CreateWalker(Transition transition, IDictionary<string, object> token)
+        public void CreateWalker(Transition transition, WalkerContext token = null)
         {
+            if (token == null)
+            {
+                token = new WalkerContext();
+            }
+
             var walker = new Walker();
-            walker.SetNextTransition(transition);
+            token.Transitions.Add(transition);
             walker.SetToken(token);
             this._walkers.Add(walker);
         }
 
-        public void Dispatch(Walker walker, Context context)
+        public void Dispatch(Walker walker, ProcessContext context)
         {
             var (token, transitions) = walker.Walk(context);
 
@@ -29,12 +35,13 @@ namespace Pvm.Core.Internal
                     if (isFirst)
                     {
                         isFirst = false;
-                        walker.SetNextTransition(t);
+                        // walker.SetNextTransition(t);
+                        token.Transitions.Add(t);
                         walker.SetToken(token);
                     }
                     else
                     {
-                        this.CreateWalker(t, token);
+                        this.CreateWalker(t, null);
                     }
                 }
             }

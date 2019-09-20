@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Pvm.Core.Contexts;
 
 namespace Pvm.Core
 {
@@ -21,12 +22,12 @@ namespace Pvm.Core
             this._executions.Add(execution);
         }
 
-        public (IDictionary<string, object>, IList<Transition>) execute(
-            Context context, IDictionary<string, object> token)
+        public (WalkerContext, IList<Transition>) execute(
+            ProcessContext context, WalkerContext token)
         {
             ExecutionDelegate next = (c, t) => Task.CompletedTask;
 
-            foreach (var exec in _executions)
+            foreach (var exec in this._executions)
             {
                 next = exec(next);
             }

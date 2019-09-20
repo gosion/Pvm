@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using Pvm.Core.Contexts;
 using Pvm.Core.Internal;
+using Pvm.Core.Utils;
 
 namespace Pvm.Core
 {
@@ -11,20 +13,20 @@ namespace Pvm.Core
         private IStorage<Process> _storage;
 
         public IDispatcher Dispatcher { get; private set; }
-        public Context Context { get; private set; }
+        public ProcessContext Context { get; private set; }
 
         public Process(Guid? id = null, IDispatcher dispatcher = null, IStorage<Process> storage = null)
             : base(id)
         {
             this.Dispatcher = dispatcher ?? new DefaultDispatcher();
-            this.Context = new Context();
+            this.Context = new ProcessContext();
             this._storage = storage;
         }
 
-        public void Start(IDictionary<string, object> token)
+        public void Start(IDictionary<string, object> initData)
         {
             var walker = this.Dispatcher.NextWalker;
-            walker.SetToken(token);
+            walker.Token.Environment.Merge(initData);
 
             while (walker != null)
             {

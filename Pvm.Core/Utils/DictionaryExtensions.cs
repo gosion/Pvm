@@ -36,6 +36,24 @@ namespace Pvm.Core.Utils
             }
         }
 
+        public static IDictionary<string, object> Merge(this IDictionary<string, object> dict, IDictionary<string, object> another)
+        {
+            if (another == null)
+            {
+                return dict;
+            }
+
+            foreach (var item in another)
+            {
+                if (dict.ContainsKey(item.Key) == false)
+                {
+                    dict[item.Key] = item.Value;
+                }
+            }
+
+            return dict;
+        }
+
         public static IDictionary<string, object> Deserialize(this IDictionary<string, object> raw)
         {
             foreach (var key in raw.Keys.ToArray())
