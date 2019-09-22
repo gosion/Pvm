@@ -303,10 +303,24 @@ namespace Pvm.Tests
                                         c.Set("accepted", total + acceptableCount);
                                     }
 
+                                    Console.WriteLine();
+
                                     return Task.CompletedTask;
                                 };
                             })
                             .CreateTransition("act1", "act2")
+                            .CreateActivity("act3")
+                            .CreateExecution("act3", _ => {
+                                return (c, t) => {
+                                    int passed = c.Get("passed", 0);
+                                    passed += 1;
+                                    Console.WriteLine($"passed: {passed}");
+                                    c.Set("passed", passed);
+
+                                    return Task.CompletedTask;
+                                };
+                            })
+                            .CreateTransition("act2", "act3")
                             .SetStart("act1")
                             .Build();
             var initData = new Dictionary<string, object>();
@@ -321,54 +335,62 @@ namespace Pvm.Tests
             // Result samples:
 
             // before: 0
-            // max: 6
-            // picked: 4
-
-            // before: 4
-            // max: 4
+            // max: 2
             // picked: 1
 
-            // before: 5
-            // max: 4
-            // picked: 1
-
-            // before: 6
-            // max: 4
-            // picked: 2
-
-            // before: 8
+            // passed: 1
+            // before: 1
             // max: 9
-            // picked: 6
+            // picked: 1
 
-            // before: 14
+            // passed: 2
+            // before: 2
+            // max: 2
+            // picked: 1
 
-            // before: 14
+            // passed: 3
+            // before: 3
+            // max: 9
+            // picked: 3
 
-            // before: 14
+            // passed: 4
+            // before: 6
+            // max: 5
+            // picked: 1
 
-            // before: 14
+            // passed: 5
+            // before: 7
+            // max: 9
+            // picked: 5
 
-            // before: 14
+            // passed: 6
+            // before: 12
 
-            // before: 14
+            // before: 12
 
-            // before: 14
+            // before: 12
 
-            // before: 14
+            // before: 12
 
-            // before: 14
+            // before: 12
 
-            // before: 14
+            // before: 12
 
-            // before: 14
+            // before: 12
 
-            // before: 14
+            // before: 12
 
-            // before: 14
+            // before: 12
 
-            // before: 14
+            // before: 12
 
-            // before: 14
+            // before: 12
+
+            // before: 12
+
+            // before: 12
+
+            // before: 12
         }
     }
 }

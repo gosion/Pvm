@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Pvm.Core.Contexts;
 
@@ -34,7 +35,7 @@ namespace Pvm.Core
 
             next(context, token).Wait();
 
-            return (token, this.OutgoingTransitions);
+            return (token, this.OutgoingTransitions.Where(gt => gt.Validate(context, token)).ToList());
         }
     }
 }

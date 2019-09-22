@@ -17,9 +17,21 @@ namespace Pvm.Core
 
         public IList<PredicateDelegate> _predicates = new List<PredicateDelegate>();
 
+        private PredicateDelegate _defaultPredicate = (c, t) =>
+        {
+            if (t.CurrentTransition.State == TransitionState.Blocked)
+            {
+                return Task.FromResult(false);
+            }
+
+            return Task.FromResult(true);
+        };
+
         public Transition(Guid? id = null) : base(id)
         {
             this.State = TransitionState.Pending;
+
+            this._predicates.Add(this._defaultPredicate);
         }
 
         public void SetState(TransitionState state)
