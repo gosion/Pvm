@@ -242,5 +242,133 @@ namespace Pvm.Tests
 
             Assert.Equal(itemcount, process.Context.Get("accepted", 0));
         }
+
+        [Fact]
+        public void Test_DynamicActivitiesWithRandomSunmary()
+        {
+            var process = new ProcessBuilder()
+                            .CreateActivity("act1")
+                            .CreateExecution("act1", _ =>
+                            {
+                                return (c, t) =>
+                                {
+                                    // 获取需要动态分拆的数量
+                                    int number = t.Get("itemcount", 1);
+                                    Transition nextTranistion = t.Destination.OutgoingTransitions?[0];
+
+                                    if (nextTranistion != null)
+                                    {
+                                        Transition dynamicTransition = null;
+
+                                        // 第一个item使用原有的transition
+                                        // 从第二个开始，添加transition并把
+                                        for (int i = 2; i <= number; i++)
+                                        {
+                                            dynamicTransition = new Transition
+                                            {
+                                                Source = nextTranistion.Source,
+                                                Destination = nextTranistion.Destination
+                                            };
+
+                                            nextTranistion.Source.AddOutgoingTransition(dynamicTransition);
+                                            nextTranistion.Destination.AddIncomingTransition(dynamicTransition);
+                                        }
+                                    }
+
+                                    return Task.CompletedTask;
+                                };
+                            })
+                            .CreateActivity("act2")
+                            .CreateExecution("act2", _ =>
+                            {
+                                return (c, t) =>
+                                {
+                                    int need = t.Get("need", 10);
+                                    int total = c.Get("accepted", 0);
+
+                                    Console.WriteLine($"before: {total}");
+
+                                    if (total >= need)
+                                    {
+                                        t.CurrentTransition.SetState(TransitionState.Blocked);
+                                    }
+                                    else
+                                    {
+                                        Random ran = new Random();
+                                        int maxPickableCount = ran.Next(1, need);
+                                        int acceptableCount = ran.Next(1, maxPickableCount);
+
+                                        Console.WriteLine($"max: {maxPickableCount}");
+                                        Console.WriteLine($"picked: {acceptableCount}");
+                                        c.Set("accepted", total + acceptableCount);
+                                    }
+
+                                    return Task.CompletedTask;
+                                };
+                            })
+                            .CreateTransition("act1", "act2")
+                            .SetStart("act1")
+                            .Build();
+            var initData = new Dictionary<string, object>();
+            int itemcount = 20;
+            int need = 10;
+            initData["itemcount"] = itemcount;
+            initData["need"] = need;
+            process.Start(initData);
+
+            Assert.True(need <= process.Context.Get("accepted", 0));
+
+            // Result samples:
+
+            // before: 0
+            // max: 6
+            // picked: 4
+
+            // before: 4
+            // max: 4
+            // picked: 1
+
+            // before: 5
+            // max: 4
+            // picked: 1
+
+            // before: 6
+            // max: 4
+            // picked: 2
+
+            // before: 8
+            // max: 9
+            // picked: 6
+
+            // before: 14
+
+            // before: 14
+
+            // before: 14
+
+            // before: 14
+
+            // before: 14
+
+            // before: 14
+
+            // before: 14
+
+            // before: 14
+
+            // before: 14
+
+            // before: 14
+
+            // before: 14
+
+            // before: 14
+
+            // before: 14
+
+            // before: 14
+
+            // before: 14
+        }
     }
 }
