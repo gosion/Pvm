@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Pvm.Core.Abstractions\Pvm.Core.Abstractions.csproj" />
+    <ProjectReference Include="..\Pvm.Core.Extensions\Pvm.Core.Extensions.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+</Project>
